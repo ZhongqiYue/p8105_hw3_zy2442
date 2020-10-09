@@ -83,3 +83,30 @@ instacart %>%
 		values_from = mean_hour
 	)
 ```
+
+## Problem 2
+
+Load, tidy, and otherwise wrangle the data.
+
+```{r}
+accel_df= (
+  read.csv("./data/accel_data.csv")%>% 
+  janitor::clean_names() %>% 
+    pivot_longer(
+      activity_1:activity_1440,
+      names_to = "activity_count",
+      names_prefix = "activity_count",
+      values_to = "minute_of_a_day") %>% 
+    mutate(
+      weekday_vs_weekend = case_when(
+        day != c("Saturday","Sunday") ~ "weekday",
+        day == c("Saturday", "Sunday") ~ "weekend",
+        TRUE                           ~ ""))
+      
+    )
+```
+
+
+
+
+
