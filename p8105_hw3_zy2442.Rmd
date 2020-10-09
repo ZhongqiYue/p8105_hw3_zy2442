@@ -96,7 +96,8 @@ accel_df= (
       activity_1:activity_1440,
       names_to = "minute_of_a_day",
       names_prefix = "activity",
-      values_to = "activity_counts") %>% 
+      values_to = "activity_counts") %>%
+  mutate(minute_of_a_day = (as.numeric(as.factor(minute_of_a_day)))) %>% 
     mutate(
       weekday_vs_weekend = case_when(
         day != c("Saturday","Sunday") ~ "weekday",
@@ -117,17 +118,40 @@ accel_df= (
       names_to = "minute_of_a_day",
       names_prefix = "activity",
       values_to = "activity_counts") %>% 
+  mutate(minute_of_a_day = (as.numeric(as.factor(minute_of_a_day))))%>% 
     mutate(
       weekday_vs_weekend = case_when(
         day != c("Saturday","Sunday") ~ "weekday",
         day == c("Saturday", "Sunday") ~ "weekend",
         TRUE                           ~ "")) %>% 
-    group_by(week,day) %>% 
+    group_by(week, day) %>% 
     summarize(total_activity = sum(activity_counts, na.rm = TRUE)) %>%
     mutate(activity_rank = min_rank(total_activity)) %>% 
-    knitr::kable()
+    	knitr::kable()
       )
 ```
 
 There is no obvious trend over total activity for each day during these three weeks. However, to some degree, the total activity counts for Tuesday and Wednesday are relatively stable, which are always within 350000~470000 counts across these three weeks. Besides, the rank of the total activity also shows that the rank of Tuesday is relative stable compared to other days, which always ranks 2,3 or 4 within a week. 
+
+```{r}
+accel_plot = 
+  accel_df= (
+  read.csv("./data/accel_data.csv")%>% 
+  janitor::clean_names() %>% 
+    pivot_longer(
+      activity_1:activity_1440,
+      names_to = "minute_of_a_day",
+      names_prefix = "activity",
+      values_to = "activity_counts")
+  ) %>% 
+  mutate(minute_of_a_day = (as.numeric(as.factor(minute_of_a_day))))
+
+accel_plot %>% 
+  	ggplot(aes(x = minute_of_a_day, y = activity_counts, color = day)) + 
+	geom_point(alpha = .5)+
+  geom_line()
+```
+
+The scatter plot indicates the pattern that the male has relatively higher activity counts during the 250~280 minutes for mostly Monday, Friday and Saturday; 550~1125 minutes for mostly Thursday, Friday and Sunday over weeks. For Tuesday and Wednesday, the activity counts are relatively stable over the whole day compared to other days. 
+
 
