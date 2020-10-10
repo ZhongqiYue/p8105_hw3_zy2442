@@ -154,4 +154,66 @@ accel_plot %>%
 
 The scatter plot indicates the pattern that the male has relatively higher activity counts during the 250~280 minutes for mostly Monday, Friday and Saturday; 550~1125 minutes for mostly Thursday, Friday and Sunday over weeks. For Tuesday and Wednesday, the activity counts are relatively stable over the whole day compared to other days. 
 
+## Problem 3
+
+```{r}
+library(p8105.datasets)
+library(ggpubr)
+data("ny_noaa")
+```
+
+This dataset contains `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns. The observations are some weather data -- Precipitation, Snowfall,Snow depth, Maximum temperature, Minimum temperature of different weather stations. There are 7 variables, which contains character variables -- id,tmax,tmin; date variable -- date;integer varibales -- prcp, snow, snwd. The missing data in each variable could be an issue since we might not know the weather changes as time went by. 
+
+```{r}
+ny_noaa_df=
+  ny_noaa %>% 
+  separate(date, c("year","month", "day")) %>% 
+  mutate(
+    year = as.integer(year),
+    month = as.integer(month),
+    day = as.integer(day)) %>% 
+  mutate(tmax = as.numeric(tmax),
+         tmin = as.numeric(tmin),
+         year = as.character(year),
+         month = as.character(month))
+
+ny_noaa_df %>% 
+  count(snow) %>% 
+  arrange(desc(n))
+```
+
+For Snowfall, 0 is the most commonly observed value since it shows up most often among all observed values. Similarly, 25 is the second most commonly observed values; 13 is the third most commonly observed values. 
+
+```{r}
+plot_df=
+  ny_noaa_df %>% 
+  filter(month == c("1","7")) %>%
+  group_by(id, year, month, tmax) %>% 
+  summarize(
+    mean_tmax = mean(tmax)
+  )%>% 
+  ggplot(aes(x = year, y = mean_tmax, color = id)) + 
+	geom_point(alpha = .5)+
+  geom_smooth()+
+  facet_grid(. ~ month)
+```
+
+```{r}
+plot1 = 
+ny_noaa_df %>% 
+  ggplot(aes(x = tmin, y = tmax))+
+  geom_bin2d()
+
+plot2 = 
+  ny_noaa_df %>% 
+  filter(snow > 0,
+         snow <100) %>% 
+  ggplot(aes(x = year, y = snow, fill = year))+
+  geom_violin()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+ggarrange(plot1, plot2, 
+          labels = c("A", "B"),
+          ncol = 2, nrow = 1)
+```
 
