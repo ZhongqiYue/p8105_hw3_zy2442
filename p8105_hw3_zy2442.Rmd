@@ -123,13 +123,15 @@ accel_df= (
       weekday_vs_weekend = case_when(
         day != c("Saturday","Sunday") ~ "weekday",
         day == c("Saturday", "Sunday") ~ "weekend",
-        TRUE                           ~ "")) %>% 
-    group_by(week, day) %>% 
+        TRUE                           ~ "")))
+  
+  accel_df$day = factor (accel_df$day, c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
+  
+accel_df %>% 
+  group_by(week, day) %>% 
     summarize(total_activity = sum(activity_counts, na.rm = TRUE)) %>%
-    mutate(activity_rank = min_rank(total_activity))
-      )
-
-accel_df%>% 
+  arrange(week,day) %>% 
+    mutate(activity_rank = min_rank(total_activity))%>% 
     	knitr::kable()
 ```
 
