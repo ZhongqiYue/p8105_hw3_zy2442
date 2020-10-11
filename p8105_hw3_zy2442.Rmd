@@ -126,9 +126,11 @@ accel_df= (
         TRUE                           ~ "")) %>% 
     group_by(week, day) %>% 
     summarize(total_activity = sum(activity_counts, na.rm = TRUE)) %>%
-    mutate(activity_rank = min_rank(total_activity)) %>% 
-    	knitr::kable()
+    mutate(activity_rank = min_rank(total_activity))
       )
+
+accel_df%>% 
+    	knitr::kable()
 ```
 
 There is no obvious trend over total activity for each day during these three weeks. However, to some degree, the total activity counts for Tuesday and Wednesday are relatively stable, which are always within 350000~470000 counts across these three weeks. Besides, the rank of the total activity also shows that the rank of Tuesday is relative stable compared to other days, which always ranks 2,3 or 4 within a week. 
@@ -175,7 +177,9 @@ ny_noaa_df=
   mutate(tmax = as.numeric(tmax),
          tmin = as.numeric(tmin),
          year = as.character(year),
-         month = as.character(month))
+         month = as.character(month),
+         tmax = tmax / 10,
+         tmin = tmin / 10)
 
 ny_noaa_df %>% 
   count(snow) %>% 
@@ -185,35 +189,53 @@ ny_noaa_df %>%
 For Snowfall, 0 is the most commonly observed value since it shows up most often among all observed values. Similarly, 25 is the second most commonly observed values; 13 is the third most commonly observed values. 
 
 ```{r}
-plot_df=
-  ny_noaa_df %>% 
-  filter(month == c("1","7")) %>%
-  group_by(id, year, month, tmax) %>% 
-  summarize(
-    mean_tmax = mean(tmax)
-  )%>% 
+ny_noaa_df %>% 
+  filter(month %in% c("1","7")) %>%
+    mutate(month = recode(month, "1" = "January", "7" = "July")) %>% 
+  group_by(id, year, month) %>% 
+  summarize(mean_tmax = mean(tmax))%>% 
   ggplot(aes(x = year, y = mean_tmax, color = id)) + 
-	geom_point(alpha = .5)+
-  geom_smooth()+
-  facet_grid(. ~ month)
+  geom_point(alpha = 0.5)+
+  geom_smooth(se = TRUE,method = "lm", color="red")+
+  theme(legend.position = "none")+
+	theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 0.5))+
+  facet_grid(. ~ month)+
+  labs(
+    title = "The average max temperature in January and in July in each station across years"
+    )
 ```
+
+As the plot shown, it is obvious to see that July is much warmer than January in every year and every station. For January, the temperature tends to be warmer from 1981 to 1990, and then tends to decrease until 1994. Then the temperature tends to increase until 1998 and keep decreasing until 2004. Lastly, it tends to be warmer again until 2006 then decrease until 2010. It seems that the average tmax in January was the warmest in 1991 and coldest in 2004. For July, the average tmax is more stalbe across years compared to January. It seems that 2010 is the hottest year for July and 2000 is the coldest. For January, it seems that there are no obvious outliers. For July, it seems that there is one outlier in 1988, which indicates that the average max temperature in July of this station was much lower than other stations in 1988.  
 
 ```{r}
 plot1 = 
 ny_noaa_df %>% 
   ggplot(aes(x = tmin, y = tmax))+
-  geom_bin2d()
+  geom_bin2d()+
+   labs(
+    title = "tmax vs tmin density"
+    )
 
 plot2 = 
   ny_noaa_df %>% 
   filter(snow > 0,
          snow <100) %>% 
   ggplot(aes(x = year, y = snow, fill = year))+
-  geom_violin()+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+  geom_violin(alpha = 0.5)+
+  stat_summary(fun = "median")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))+
+  scale_y_continuous(
+    breaks = c(0, 50, 100),
+    labels = c("0 mm", "50 mm","100 mm")
+  )+
+   labs(
+    title = "The distribution of snowfall values (0~100mm) by year"
+    )
 
 ggarrange(plot1, plot2, 
           labels = c("A", "B"),
           ncol = 2, nrow = 1)
 ```
+
+For this problem, in order to merge these two plots, the package "ggpubr" is installed and the function "ggarrange" is used. From plot A, it seems that the distribution of "tmax vs tmin" is more dense in the area where tmin ranges from 0 t0 40 degree C and tmax ranges from 0 to 25 degree C. From plot B, it is obvious that the distribution of snow fall values between 0 ~ 100 mm is very similar across years.  
 
